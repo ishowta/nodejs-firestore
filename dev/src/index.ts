@@ -867,6 +867,11 @@ export class Firestore implements firestore.Firestore {
       argumentName?: string
     ) => google.protobuf.ITimestamp | undefined;
     let convertFields: (data: ApiMapValue) => ApiMapValue;
+    
+    if (process.env.FIRESTORE_USE_REST_API === 'true') {
+      encoding = 'json'; //Forcing json for rest api usage
+    }
+
 
     if (encoding === undefined || encoding === 'protobufJS') {
       convertTimestamp = data => data as google.protobuf.ITimestamp;
@@ -1379,7 +1384,7 @@ export class Firestore implements firestore.Firestore {
       },
     };
 
-    if (retryCodes) {
+    if (retryCodes && !(process.env.FIRESTORE_USE_REST_API === 'true')) {
       const retryParams = getRetryParams(methodName);
       callOptions.retry = new (require('google-gax').RetryOptions)(
         retryCodes,
@@ -1757,7 +1762,7 @@ Object.defineProperty(module.exports, 'v1beta1', {
 Object.defineProperty(module.exports, 'v1', {
   // The v1 module is very large. To avoid pulling it in from static
   // scope, we lazy-load  the module.
-  get: () => require('./v1'),
+  get: () => (process.env.FIRESTORE_USE_REST_API === 'true') ? require('./v1rest') : require('./v1'),
 });
 
 /**
