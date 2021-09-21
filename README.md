@@ -1,5 +1,21 @@
-To enable REST Api usage, set FIRESTORE_USE_REST_API environmental variable to true
-> process.env.FIRESTORE_USE_REST_API = 'true';
+### Are you having long cold starts ranging from 4-15 secs when using firestore with cloud functions?
+(Check out in cloud trace how bad they are performing for firestore triggers or http functions)
+
+
+This module makes use of rest api (through google apis) instead of gRpc libs used in standard library. The cold starts with this project are minimal and acceptable. 
+
+Just set the FIRESTORE_USE_REST_API env variable to use REST mode.
+Setting to false will make use of default gRpc libraries.
+
+> We will try to sync with the main project on every major release.
+
+
+# Installation steps
+
+1. npm install @bountyrush/firestore
+2. Replace require('@google-cloud/firestore') with require('@bountyrush/firestore')
+3. Have FIRESTORE_USE_REST_API = 'true' in your environment variables. (process.env.FIRESTORE_USE_REST_API should be set to 'true' for using in rest mode. If its not set, it just uses standard firestore with grpc connections)
+
 
 
 [//]: # "This README.md file is auto-generated, all changes to this file will be lost."
