@@ -7,7 +7,7 @@ This module makes use of rest api (through google apis) instead of gRpc libs use
 Just set the FIRESTORE_USE_REST_API env variable to use REST mode.
 Setting to false will make use of default gRpc libraries.
 
-> We will try to sync with the main project on every major release.
+> We will try to sync with the main project on every major+minor release.
 
 
 # Installation steps

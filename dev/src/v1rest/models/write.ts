@@ -30,7 +30,7 @@ export class Write {
     /**
      * A document name to delete. In the format: `projects/{project_id}/databases/{database_id}/documents/{document_path}`.
      */
-    _delete?: string;
+    'delete'?: string;
     /**
      * Applies a transformation to a document.
      */
@@ -54,8 +54,8 @@ export class Write {
         if (json.currentDocument !== undefined) {
             this.currentDocument = new Precondition(json.currentDocument);
         }
-        if (json._delete !== undefined) {
-            this._delete = json._delete; //[Data format: ]
+        if (json.delete !== undefined) {
+            this.delete = json.delete; //[Data format: ]
         }
         if (json.transform !== undefined) {
             this.transform = new DocumentTransform(json.transform);
