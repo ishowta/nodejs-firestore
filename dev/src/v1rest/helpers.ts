@@ -22,7 +22,11 @@ export function stringFromTimestampJson(
     } else if (timestamp.seconds) {
       const date = new Date(Date.UTC(1970, 0, 1));
       date.setUTCSeconds(Number(timestamp.seconds));
-      date.setUTCMilliseconds(Number(timestamp.nanos) / 1000);
+      if (timestamp.nanos) {
+        date.setUTCMilliseconds(Number(timestamp.nanos) / 1000);
+      } else {
+        date.setUTCMilliseconds(0);
+      }
       return date.toISOString();
     } else {
       return undefined;
