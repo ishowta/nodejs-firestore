@@ -2277,6 +2277,6 @@ declare namespace FirebaseFirestore {
   }
 }
 
-declare module '@google-cloud/firestore' {
+declare module '@bountyrush/firestore' {
   export = FirebaseFirestore;
 }
