@@ -10,7 +10,7 @@ import {
   JWT,
   UserRefreshClient,
   BaseExternalAccountClient,
-// eslint-disable-next-line node/no-extraneous-import
+  // eslint-disable-next-line node/no-extraneous-import
 } from 'googleapis-common';
 
 // eslint-disable-next-line node/no-extraneous-import
@@ -55,19 +55,21 @@ export class FirestoreClient implements GapicClient {
     this.client = firestore({version: 'v1'});
   }
 
-  getProjectId(): Promise<string> {
-    if (!this.authClient) {
-      return this.auth.getClient().then(client => {
-        this.authClient = client;
-        //google.options({auth: client});
-        return this.auth.getProjectId();
-      });
-    } else {
-      return this.auth.getProjectId();
+  async initializeAuthClientIfNeeded() {
+    if (this.authClient) {
+      return;
     }
+
+    this.authClient = await this.auth.getClient();
+    //google.options({auth: client});
   }
 
-  beginTransaction(
+  async getProjectId() {
+    await this.initializeAuthClientIfNeeded();
+    return this.auth.getProjectId();
+  }
+
+  async beginTransaction(
     request: protos.google.firestore.v1.IBeginTransactionRequest,
     options?: CallOptions
   ): Promise<
@@ -77,24 +79,24 @@ export class FirestoreClient implements GapicClient {
       {} | undefined
     ]
   > {
-    const promise = this.client.projects.databases.documents.beginTransaction(
-      {
-        database: request!.database!,
-        requestBody: new BeginTransactionRequest(request),
-        auth: this.authClient,
-      },
-      convertOptions(options)
-    );
-    return promise.then(response => {
-      return [
-        response?.data as protos.google.firestore.v1.IBeginTransactionResponse,
-        request,
-        undefined,
-      ]; //TODO cross check last undefined param once
-    });
+    await this.initializeAuthClientIfNeeded();
+    const response =
+      await this.client.projects.databases.documents.beginTransaction(
+        {
+          database: request!.database!,
+          requestBody: new BeginTransactionRequest(request),
+          auth: this.authClient,
+        },
+        convertOptions(options)
+      );
+    return [
+      response?.data as protos.google.firestore.v1.IBeginTransactionResponse,
+      request,
+      undefined,
+    ]; //TODO cross check last undefined param once
   }
 
-  commit(
+  async commit(
     request: protos.google.firestore.v1.ICommitRequest,
     options?: CallOptions
   ): Promise<
@@ -104,7 +106,8 @@ export class FirestoreClient implements GapicClient {
       {} | undefined
     ]
   > {
-    const promise = this.client.projects.databases.documents.commit(
+    await this.initializeAuthClientIfNeeded();
+    const response = await this.client.projects.databases.documents.commit(
       {
         database: request!.database!,
         requestBody: new CommitRequest(request),
@@ -112,16 +115,14 @@ export class FirestoreClient implements GapicClient {
       },
       convertOptions(options)
     );
-    return promise.then(response => {
-      return [
-        response?.data as protos.google.firestore.v1.ICommitResponse,
-        request,
-        undefined,
-      ];
-    });
+    return [
+      response?.data as protos.google.firestore.v1.ICommitResponse,
+      request,
+      undefined,
+    ];
   }
 
-  batchWrite(
+  async batchWrite(
     request: protos.google.firestore.v1.IBatchWriteRequest,
     options?: CallOptions
   ): Promise<
@@ -131,7 +132,8 @@ export class FirestoreClient implements GapicClient {
       {} | undefined
     ]
   > {
-    const promise = this.client.projects.databases.documents.batchWrite(
+    await this.initializeAuthClientIfNeeded();
+    const response = await this.client.projects.databases.documents.batchWrite(
       {
         database: request!.database!,
         requestBody: new BatchWriteRequest(request),
@@ -139,16 +141,14 @@ export class FirestoreClient implements GapicClient {
       },
       convertOptions(options)
     );
-    return promise.then(response => {
-      return [
-        response?.data as protos.google.firestore.v1.IBatchWriteResponse,
-        request,
-        undefined,
-      ];
-    });
+    return [
+      response?.data as protos.google.firestore.v1.IBatchWriteResponse,
+      request,
+      undefined,
+    ];
   }
 
-  rollback(
+  async rollback(
     request: protos.google.firestore.v1.IRollbackRequest,
     options?: CallOptions
   ): Promise<
@@ -158,7 +158,8 @@ export class FirestoreClient implements GapicClient {
       {} | undefined
     ]
   > {
-    const promise = this.client.projects.databases.documents.rollback(
+    await this.initializeAuthClientIfNeeded();
+    const response = await this.client.projects.databases.documents.rollback(
       {
         database: request!.database!,
         requestBody: new RollbackRequest(request),
@@ -166,13 +167,11 @@ export class FirestoreClient implements GapicClient {
       },
       convertOptions(options)
     );
-    return promise.then(response => {
-      return [
-        response?.data as protos.google.protobuf.IEmpty,
-        request,
-        undefined,
-      ];
-    });
+    return [
+      response?.data as protos.google.protobuf.IEmpty,
+      request,
+      undefined,
+    ];
   }
 
   batchGetDocuments(
@@ -181,34 +180,36 @@ export class FirestoreClient implements GapicClient {
   ): Duplex {
     const duplex = new Transform();
 
-    this.client.projects.databases.documents.batchGet(
-      {
-        database: request!.database!,
-        requestBody: new BatchGetDocumentsRequest(request),
-        auth: this.authClient,
-      },
-      convertOptions(options),
-      (err: Error | null, res?: GaxiosResponse | null) => {
-        logger(
-          'Firestore(REST).batchGetDocuments',
-          null,
-          'Received response [Error: ',
-          err,
-          ' ' + 'Res: ',
-          require('util').inspect(res?.data) + ']'
-        );
+    this.initializeAuthClientIfNeeded().then(() => {
+      this.client.projects.databases.documents.batchGet(
+        {
+          database: request!.database!,
+          requestBody: new BatchGetDocumentsRequest(request),
+          auth: this.authClient,
+        },
+        convertOptions(options),
+        (err: Error | null, res?: GaxiosResponse | null) => {
+          logger(
+            'Firestore(REST).batchGetDocuments',
+            null,
+            'Received response [Error: ',
+            err,
+            ' ' + 'Res: ',
+            require('util').inspect(res?.data) + ']'
+          );
 
-        if (!err) {
-          res?.data.forEach((element: unknown) => {
-            duplex.emit('data', element);
-          });
+          if (!err) {
+            res?.data.forEach((element: unknown) => {
+              duplex.emit('data', element);
+            });
 
-          duplex.emit('end');
-        } else {
-          duplex.emit('error', err);
+            duplex.emit('end');
+          } else {
+            duplex.emit('error', err);
+          }
         }
-      }
-    );
+      );
+    });
 
     return duplex;
   }
@@ -219,33 +220,35 @@ export class FirestoreClient implements GapicClient {
   ): Duplex {
     const duplex = new Transform();
 
-    this.client.projects.databases.documents.runQuery(
-      {
-        parent: request!.parent!,
-        requestBody: new RunQueryRequest(request),
-        auth: this.authClient,
-      },
-      convertOptions(options),
-      (err: Error | null, res?: GaxiosResponse | null) => {
-        logger(
-          'Firestore(REST).runQuery',
-          null,
-          'Received response [Error: ',
-          err,
-          ' ' + 'Res: ',
-          require('util').inspect(res?.data) + ']'
-        );
-        if (!err) {
-          res?.data.forEach((element: unknown) => {
-            duplex.emit('data', element);
-          });
+    this.initializeAuthClientIfNeeded().then(() => {
+      this.client.projects.databases.documents.runQuery(
+        {
+          parent: request!.parent!,
+          requestBody: new RunQueryRequest(request),
+          auth: this.authClient,
+        },
+        convertOptions(options),
+        (err: Error | null, res?: GaxiosResponse | null) => {
+          logger(
+            'Firestore(REST).runQuery',
+            null,
+            'Received response [Error: ',
+            err,
+            ' ' + 'Res: ',
+            require('util').inspect(res?.data) + ']'
+          );
+          if (!err) {
+            res?.data.forEach((element: unknown) => {
+              duplex.emit('data', element);
+            });
 
-          duplex.emit('end');
-        } else {
-          duplex.emit('error', err);
+            duplex.emit('end');
+          } else {
+            duplex.emit('error', err);
+          }
         }
-      }
-    );
+      );
+    });
 
     return duplex;
   }
@@ -257,21 +260,21 @@ export class FirestoreClient implements GapicClient {
   ): Promise<[protos.google.firestore.v1.IDocument[], unknown, unknown]> {
     throw new Error('Not implemented');
   }
-  listCollectionIds(
+  async listCollectionIds(
     request: protos.google.firestore.v1.IListCollectionIdsRequest,
     options?: CallOptions
   ): Promise<[string[], unknown, unknown]> {
-    const promise = this.client.projects.databases.documents.listCollectionIds(
-      {
-        parent: request!.parent!,
-        requestBody: new ListCollectionIdsRequest(request),
-        auth: this.authClient,
-      },
-      convertOptions(options)
-    );
-    return promise.then(response => {
-      return [response?.data as string[], undefined, undefined];
-    });
+    await this.initializeAuthClientIfNeeded();
+    const response =
+      await this.client.projects.databases.documents.listCollectionIds(
+        {
+          parent: request!.parent!,
+          requestBody: new ListCollectionIdsRequest(request),
+          auth: this.authClient,
+        },
+        convertOptions(options)
+      );
+    return [response?.data as string[], undefined, undefined];
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   listen(options?: CallOptions): Duplex {
@@ -283,33 +286,35 @@ export class FirestoreClient implements GapicClient {
   ): Duplex {
     const duplex = new Transform();
 
-    this.client.projects.databases.documents.partitionQuery(
-      {
-        parent: request!.parent!,
-        requestBody: new PartitionQueryRequest(request),
-        auth: this.authClient,
-      },
-      convertOptions(options),
-      (err: Error | null, res?: GaxiosResponse | null) => {
-        logger(
-          'Firestore(REST).partitionQueryStream',
-          null,
-          'Received response [Error: ',
-          err,
-          ' ' + 'Res: ',
-          require('util').inspect(res?.data) + ']'
-        );
-        if (!err) {
-          res?.data?.partitions.forEach((element: unknown) => {
-            duplex.emit('data', element);
-          });
+    this.initializeAuthClientIfNeeded().then(() => {
+      this.client.projects.databases.documents.partitionQuery(
+        {
+          parent: request!.parent!,
+          requestBody: new PartitionQueryRequest(request),
+          auth: this.authClient,
+        },
+        convertOptions(options),
+        (err: Error | null, res?: GaxiosResponse | null) => {
+          logger(
+            'Firestore(REST).partitionQueryStream',
+            null,
+            'Received response [Error: ',
+            err,
+            ' ' + 'Res: ',
+            require('util').inspect(res?.data) + ']'
+          );
+          if (!err) {
+            res?.data?.partitions.forEach((element: unknown) => {
+              duplex.emit('data', element);
+            });
 
-          duplex.emit('end');
-        } else {
-          duplex.emit('error', err);
+            duplex.emit('end');
+          } else {
+            duplex.emit('error', err);
+          }
         }
-      }
-    );
+      );
+    });
 
     return duplex;
   }
