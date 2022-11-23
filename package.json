@@ -46,7 +46,7 @@
     "compile": "tsc -p .",
     "postcompile": "node scripts/init-directories.js && cp -r dev/protos build && cp dev/src/v1beta1/*.json build/src/v1beta1/ && cp dev/src/v1/*.json build/src/v1/ && cp dev/src/v1rest/*.json build/src/v1rest/ && cp dev/conformance/test-definition.proto build/conformance && cp dev/conformance/conformance-tests/*.json build/conformance/conformance-tests",
     "fix": "gts fix",
-    "prepare": "npm run compile",
+    "postinstall": "npm run compile",
     "docs-test": "linkinator docs",
     "predocs-test": "npm run docs",
     "prelint": "cd samples; npm link ../; npm install",
